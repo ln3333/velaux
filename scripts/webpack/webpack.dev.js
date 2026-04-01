@@ -39,7 +39,7 @@ module.exports = (env = {}) =>
               target: esbuildTargets,
             },
           },
-          exclude: /node_modules/,
+          exclude: /node_modules\/(?!@velaux)/,
         },
       ],
     },

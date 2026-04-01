@@ -488,7 +488,9 @@ func renderUIParameter(key, label string, property *openapi3.SchemaRef, required
 	subType := ""
 	if property.Value.Items != nil {
 		if property.Value.Items.Value != nil {
-			subType = (*property.Value.Items.Value.Type)[0]
+			if property.Value.Items.Value.Type != nil && len(*property.Value.Items.Value.Type) > 0 {
+				subType = (*property.Value.Items.Value.Type)[0]
+			}
 		}
 		parameter.SubParameters = renderDefaultUISchema(property.Value.Items.Value)
 	}
@@ -511,7 +513,11 @@ func renderUIParameter(key, label string, property *openapi3.SchemaRef, required
 	parameter.JSONKey = key
 	parameter.Description = property.Value.Description
 	parameter.Label = label
-	parameter.UIType = schema.GetDefaultUIType((*property.Value.Type)[0], len(parameter.Validate.Options) != 0, subType, len(property.Value.Properties) > 0)
+	propertyType := ""
+	if property.Value.Type != nil && len(*property.Value.Type) > 0 {
+		propertyType = (*property.Value.Type)[0]
+	}
+	parameter.UIType = schema.GetDefaultUIType(propertyType, len(parameter.Validate.Options) != 0, subType, len(property.Value.Properties) > 0)
 	parameter.Validate.Max = property.Value.Max
 	parameter.Validate.MaxLength = property.Value.MaxLength
 	parameter.Validate.Min = property.Value.Min

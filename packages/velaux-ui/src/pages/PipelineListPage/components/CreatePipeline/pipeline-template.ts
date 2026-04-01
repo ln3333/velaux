@@ -1,4 +1,50 @@
-export const templates = [
+interface Template {
+  label: string;
+  value: string;
+  defaultContext?: Record<string, string>;
+}
+
+export const templates: Template[] = [
+  {
+    label: 'CI Template: Scan, Build & Push Image',
+    defaultContext: {
+      gitUrl: 'https://github.com/myorg/myapp.git',
+      gitBranch: 'main',
+      image: 'docker.io/myorg/myapp:latest',
+    },
+    value: `
+- name: Code Scan
+  type: vela-cli
+  properties:
+    image: aquasec/trivy:0.50.0
+    command:
+      - sh
+      - -c
+      - "trivy repo --exit-code 1 --severity HIGH,CRITICAL https://github.com/myorg/myapp.git"
+    serviceAccountName: default
+
+- name: Build and Push Image
+  type: build-push-image
+  properties:
+    image: docker.io/myorg/myapp:latest
+    context:
+      git: https://github.com/myorg/myapp.git
+      branch: main
+    dockerfile: ./Dockerfile
+    credentials:
+      image:
+        name: docker-registry-secret
+        key: .dockerconfigjson
+
+- name: Clean
+  type: clean-jobs
+
+- name: Notification
+  type: print-message-in-status
+  properties:
+    message: "CI completed: docker.io/myorg/myapp:latest built and pushed."
+`,
+  },
   {
     label: 'Observability Template',
     defaultContext: {
