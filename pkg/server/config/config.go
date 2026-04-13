@@ -61,6 +61,11 @@ type Config struct {
 
 	// ExitOnLostLeader will exit the process if this server lost the leader election, set this to true for debugging
 	ExitOnLostLeader bool
+
+	// StaticAPIKey when non-empty, requests may authenticate with Authorization: Bearer <StaticAPIKey> without JWT (fork-only).
+	StaticAPIKey string
+	// StaticAPIKeyUser is the VelaUX username used for RBAC when StaticAPIKey matches; user must exist (e.g. admin).
+	StaticAPIKeyUser string
 }
 
 // PluginConfig the plugin directory config
@@ -100,6 +105,7 @@ func NewConfig() *Config {
 		},
 		DexServerURL:     "http://dex.vela-system:5556",
 		ExitOnLostLeader: true,
+		StaticAPIKeyUser: "admin",
 	}
 }
 
@@ -132,5 +138,7 @@ func (s *Config) AddFlags(fs *pflag.FlagSet, c *Config) {
 	fs.StringVar(&s.DexServerURL, "dex-server", c.DexServerURL, "the URL of the dex server.")
 	fs.StringArrayVar(&s.PluginConfig.CustomPluginPath, "plugin-path", c.PluginConfig.CustomPluginPath, "the path of the plugin directory")
 	fs.BoolVar(&s.ExitOnLostLeader, "exit-on-lost-leader", c.ExitOnLostLeader, "exit the process if this server lost the leader election")
+	fs.StringVar(&s.StaticAPIKey, "static-api-key", c.StaticAPIKey, "Optional static API key: same as Bearer token to authenticate without JWT. Keep secret; user must exist (see --static-api-key-user).")
+	fs.StringVar(&s.StaticAPIKeyUser, "static-api-key-user", c.StaticAPIKeyUser, "VelaUX username for RBAC when --static-api-key matches (default admin).")
 	profiling.AddFlags(fs)
 }

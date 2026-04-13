@@ -280,6 +280,8 @@ func (s *restServer) BuildRestfulConfig() (*restfulSpec.Config, error) {
 
 // RegisterAPIRoute register the API route
 func (s *restServer) RegisterAPIRoute() restfulSpec.Config {
+	api.SetStaticAPIKeyAuth(s.cfg.StaticAPIKey, s.cfg.StaticAPIKeyUser)
+
 	/* **************************************************************  */
 	/* *************       Open API Route Group     *****************  */
 	/* **************************************************************  */

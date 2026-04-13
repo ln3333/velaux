@@ -18,6 +18,7 @@ package api
 
 import (
 	"context"
+	"crypto/subtle"
 	"net/http"
 	"strings"
 
@@ -29,6 +30,40 @@ import (
 	"github.com/kubevela/velaux/pkg/server/utils"
 	"github.com/kubevela/velaux/pkg/server/utils/bcode"
 )
+
+var (
+	staticAPIKey     string
+	staticAPIKeyUser string
+)
+
+// SetStaticAPIKeyAuth configures optional static Bearer API key authentication (call before serving requests).
+// When key is empty, static key auth is disabled. user is the VelaUX login name for RBAC; if empty, "admin" is used.
+func SetStaticAPIKeyAuth(key, user string) {
+	staticAPIKey = key
+	if user != "" {
+		staticAPIKeyUser = user
+	} else {
+		staticAPIKeyUser = "admin"
+	}
+}
+
+// staticAPIKeyMatch reports whether tokenValue equals the configured static API key (constant-time when lengths match).
+func staticAPIKeyMatch(tokenValue string) (username string, ok bool) {
+	if staticAPIKey == "" {
+		return "", false
+	}
+	if len(tokenValue) != len(staticAPIKey) {
+		return "", false
+	}
+	if subtle.ConstantTimeCompare([]byte(tokenValue), []byte(staticAPIKey)) == 1 {
+		u := staticAPIKeyUser
+		if u == "" {
+			u = "admin"
+		}
+		return u, true
+	}
+	return "", false
+}
 
 type authentication struct {
 	AuthenticationService service.AuthenticationService `inject:""`
@@ -129,6 +164,11 @@ func authTokenCheck(req *http.Request, res http.ResponseWriter) bool {
 			bcode.ReturnHTTPError(req, res, bcode.ErrNotAuthorized)
 			return false
 		}
+	}
+	if u, ok := staticAPIKeyMatch(tokenValue); ok {
+		newReq := req.WithContext(context.WithValue(req.Context(), &apis.CtxKeyUser, u))
+		*req = *newReq
+		return true
 	}
 	token, err := service.ParseToken(tokenValue)
 	if err != nil {
